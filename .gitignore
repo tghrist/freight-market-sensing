@@ -1,0 +1,43 @@
+# --- Environment Variables ---
+# NEVER commit your API keys
+.env
+
+# --- Python / Poetry ---
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Poetry's local virtual environment (if configured to be in-project)
+.venv/
+bin/
+lib/
+develop-eggs/
+dist/
+eggs/
+parts/
+sdist/
+var/
+*.egg-info/
+
+# --- Data & Project Specifics ---
+# Do not track raw or processed data files (protects proprietary proxy data)
+data/
+*.csv
+*.xlsx
+*.parquet
+*.sqlite
+
+# --- Notebooks ---
+# Ignore Jupyter checkpoints
+.ipynb_checkpoints/
+
+# --- IDEs ---
+# VS Code
+.vscode/
+# PyCharm / IntelliJ
+.idea/
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
