@@ -24,7 +24,6 @@ if not FRED_KEY:
 fred = Fred(api_key=FRED_KEY)
 
 # --- 3. The Feature & Validator Dictionary ---
-# Mapping the cryptic FRED IDs to clean, human-readable file names
 SERIES_MAP = {
     # FAST INDICATORS
     'WEI': 'weekly_economic_index',
@@ -49,41 +48,63 @@ SERIES_MAP = {
     'WPU101': 'ppi_iron_steel',
     'WPU102501': 'ppi_aluminum_shapes',
     'PCU336212336212': 'ppi_truck_mfg',
-    'RETAILIRSA': 'inventory_to_sales_ratio',
+    'RETAILIRSA': 'retail_inventory_to_sales_ratio',
+    'ISRATIO': 'total_inventory_to_sales_ratio',
 
     # VALIDATORS (TARGETS)
     'PCU4841214841212': 'target_ppi_dry_van',
     'PCU484122484122': 'target_ppi_ltl_reefer',
-    'PCU484230484230': 'target_ppi_flatbed'
+    'PCU484230484230': 'target_ppi_flatbed',
+    'FRGSHPUSM649NCIS': 'cass_shipments',
+    'FRGEXPUSM649NCIS': 'cass_expenditures'
 }
 
 
+def fetch_with_retry(series_id, max_retries=3):
+    """Fetches data from FRED with exponential backoff for server errors."""
+    for attempt in range(max_retries):
+        try:
+            data = fred.get_series(series_id)
+            return data
+        except Exception as e:
+            error_msg = str(e)
+            # If it's a server error, we wait and retry
+            if "Internal Server Error" in error_msg or "500" in error_msg:
+                wait_time = 2 ** attempt  # 1s, 2s, 4s
+                print(f"[Server Hiccup] Retrying in {wait_time}s...", end=" ")
+                time.sleep(wait_time)
+            else:
+                # If it's a 400 Bad Request, fail immediately
+                raise e
+    raise Exception("Max retries reached. FRED server is down.")
+
+
 def fetch_and_save_data():
-    """Iterates through the SERIES_MAP, fetches data, and saves to CSV."""
+    """Iterates through the SERIES_MAP, fetches fresh data, and saves to CSV."""
     print(f"Starting Data Ingestion. Saving to: {DATA_DIR}")
     print("-" * 50)
 
     for series_id, file_name in SERIES_MAP.items():
+        output_path = DATA_DIR / f"{file_name}.parquet"
+
         try:
             print(f"Fetching: {file_name} ({series_id})...", end=" ")
 
-            # Pull the data from FRED
-            data = fred.get_series(series_id)
+            # Use the robust retry logic
+            data = fetch_with_retry(series_id)
 
             # Convert to a clean DataFrame
             df = pd.DataFrame(data, columns=['value'])
             df.index.name = 'date'
 
-            # Drop empty rows (some old FRED series have leading NaNs)
+            # Drop empty rows
             df = df.dropna()
 
-            # Save to the data/ folder
-            output_path = DATA_DIR / f"{file_name}.csv"
-            df.to_csv(output_path)
-
+            # Save to the data/ folder (Overwrites existing for fresh data)
+            df.to_parquet(output_path)
             print("SUCCESS")
 
-            # RATE LIMITING: Sleep for 0.5 seconds to avoid being blocked by FRED
+            # RATE LIMITING
             time.sleep(0.5)
 
         except Exception as e:
