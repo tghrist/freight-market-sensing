@@ -40,7 +40,7 @@ SERIES_MAP = {
     'MANEMP': 'mfg_employment',
     'UMCSENT': 'consumer_sentiment',
     'PALUMUSDM': 'global_aluminum_price',
-    'HTRUCKSSAAR': 'heavy_truck_sales',
+
 
     # SLOW INDICATORS
     'INDPRO': 'industrial_production',
@@ -56,6 +56,8 @@ SERIES_MAP = {
     'PCU4841214841212': 'target_ppi_dry_van',
     'PCU484122484122': 'target_ppi_ltl_reefer',
     'PCU484230484230': 'target_ppi_flatbed',
+    'IPG336212S': 'trailer_production_volume',
+    'HTRUCKSSAAR': 'heavy_truck_sales',
     'FRGSHPUSM649NCIS': 'cass_shipments',
     'FRGEXPUSM649NCIS': 'cass_expenditures'
 }
