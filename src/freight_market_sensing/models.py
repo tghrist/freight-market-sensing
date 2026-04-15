@@ -16,11 +16,11 @@ class EquipmentDemandForecaster:
 
         # The Top 5 features identified by our XGBoost ranking
         self.top_features = [
+            'heavy_truck_sales',
             'ppi_heavy_truck_cab_mfg',
-            'feature_retail_inventory_spread',
-            'mfg_employment',
-            'target_ppi_flatbed',
-            'freight_tsi'
+            'target_ppi_dry_van',
+            'global_aluminum_price',
+            'mfg_employment'
         ]
 
     def build_model(self, forecast_horizon_weeks=12):

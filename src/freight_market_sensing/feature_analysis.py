@@ -14,14 +14,16 @@ def rank_features():
 
     print("Preparing Data for Trailer Demand Ranking...")
 
-    # 1. NEW TARGET: Trailer Production Volume
+    # 1. NEW TARGET
     target_col = 'trailer_production_volume'
+    # target_col = 'heavy_truck_sales'
 
     # Drop the target, the raw Cass components, and the other target (truck sales)
     features_to_drop = [
         'cass_shipments',
         'cass_expenditures',
-        'heavy_truck_sales',
+        'trailer_production_volume',
+        # 'heavy_truck_sales',
         target_col
     ]
 
