@@ -47,7 +47,8 @@ SERIES_MAP = {
     'TSIFRGHT': 'freight_tsi',
     'WPU101': 'ppi_iron_steel',
     'WPU102501': 'ppi_aluminum_shapes',
-    'PCU336212336212': 'ppi_truck_mfg',
+    'PCU336212336212': 'ppi_truck_trailer_mfg',
+    'PCU336120336120': 'ppi_heavy_truck_cab_mfg',
     'RETAILIRSA': 'retail_inventory_to_sales_ratio',
     'ISRATIO': 'total_inventory_to_sales_ratio',
 
