@@ -18,13 +18,50 @@ class FeatureStore:
 
         # Iterate through every .parquet file in the directory
         for file_path in self.data_dir.glob("*.parquet"):
-            feature_name = file_path.stem  # e.g., 'diesel_price'
-
+            feature_name = file_path.stem  # e.g., 'diesel_price' or 'djta'
+            
             # Load the file
             df = pd.read_parquet(file_path)
 
-            # Rename the generic 'value' column to the actual feature name
-            df = df.rename(columns={'value': feature_name})
+            # =======================================================
+            # RESILIENT DATE HANDLING
+            # =======================================================
+            # 1. If 'date' isn't a column, check if it's trapped in the index
+            if 'date' not in df.columns and 'observation_date' not in df.columns:
+                df = df.reset_index()
+
+            # 2. Standardize all column names to lowercase to catch 'Date' or 'DATE'
+            df.columns = [col.lower() for col in df.columns]
+
+            # 3. If FRED named it 'observation_date', rename it to 'date'
+            if 'observation_date' in df.columns:
+                df = df.rename(columns={'observation_date': 'date'})
+            # =======================================================
+
+            # Ensure 'date' is a proper datetime object
+            df['date'] = pd.to_datetime(df['date'])
+
+            # =======================================================
+            # DJTA INTERCEPTION: Convert Daily Stock Data to Weekly
+            # =======================================================
+            if 'dow_jones_transportation_avg' in feature_name.lower():
+                print("Intercepting DJTA: Downsampling from Daily to Weekly (Friday)...")
+                
+                # Temporarily set date as index for resampling
+                df = df.set_index('date')
+                
+                # Create different resampling features
+                djta_mean = df.resample('W-FRI').mean().rename(columns={'value': 'djta_weekly_mean'})
+                djta_vol = df.resample('W-FRI').std().rename(columns={'value': 'djta_weekly_volatility'})
+                djta_last = df.resample('W-FRI').last().rename(columns={'value': 'djta_weekly_last'})
+                
+                # Recombine all three and reset the index back to a 'date' column
+                df = pd.concat([djta_mean, djta_vol, djta_last], axis=1).reset_index()
+
+            else:
+                # For all standard features, just rename the generic 'value' column
+                df = df.rename(columns={'value': feature_name})
+            # =======================================================
 
             # Merge into the master dataframe
             if master_df.empty:
@@ -33,8 +70,8 @@ class FeatureStore:
                 # Outer join ensures we don't lose any dates (Weekly or Monthly)
                 master_df = pd.merge(master_df, df, on='date', how='outer')
 
-        # Sort chronologically from oldest to newest
-        master_df = master_df.sort_index()
+        # Set the date as the true index and sort chronologically
+        master_df = master_df.set_index('date').sort_index()
         return master_df
 
     def engineer_business_logic(self, df) -> pd.DataFrame:

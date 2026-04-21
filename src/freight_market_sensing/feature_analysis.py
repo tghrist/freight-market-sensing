@@ -62,7 +62,7 @@ def rank_features():
     plt.tight_layout()
 
     plt.savefig('../../trailer_sales_drivers.png')
-    print("\nVisual saved as 'truck_sales_drivers.png' in your project root.")
+    print("\nVisual saved as 'trailer_sales_drivers04202026.png' in your project root.")
 
 
 if __name__ == "__main__":

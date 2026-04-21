@@ -32,6 +32,7 @@ SERIES_MAP = {
     'VIXCLS': 'vix_volatility',
     'T10Y2Y': 'yield_curve_spread',
     'ICSA': 'initial_jobless_claims',
+    'DJTA': 'dow_jones_transportation_avg',
 
     # MEDIUM INDICATORS
     'HOUST': 'housing_starts',
