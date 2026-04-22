@@ -103,6 +103,14 @@ class FeatureStore:
         df = df.dropna()
 
         return df
+    
+    def correlation_check(self, df) -> pd.DataFrame:
+        """Compares all features to eachother returning a matrix of correlation (r) values."""
+        print("Checking feature correlation...")
+
+        corr_df = df.corr(method='pearson')
+
+        return corr_df
 
     def build_master_matrix(self) -> pd.DataFrame:
         """The main pipeline method that executes all steps."""
