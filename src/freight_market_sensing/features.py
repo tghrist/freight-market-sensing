@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+from src.freight_market_sensing.feature_engineering.series import SERIES_MAP
 
 
 class FeatureStore:
@@ -11,15 +12,23 @@ class FeatureStore:
         if not self.data_dir.exists():
             raise FileNotFoundError("Data directory not found. Run data_ingestion.py first.")
 
-    def load_and_merge(self) -> pd.DataFrame:
+    def load_and_merge(self, category) -> pd.DataFrame:
         """Reads all Parquet files and merges them into a single timeline."""
         print("Loading and merging Parquet files...")
         master_df = pd.DataFrame()
 
+        valid_features = [
+            meta['name'] for meta in SERIES_MAP.values()
+            if meta['category'] == category
+        ]
+
         # Iterate through every .parquet file in the directory
         for file_path in self.data_dir.glob("*.parquet"):
-            feature_name = file_path.stem  # e.g., 'diesel_price' or 'djta'
-            
+            feature_name = file_path.stem  # e.g., 'diesel_price'
+
+            if feature_name not in valid_features:
+                continue
+
             # Load the file
             df = pd.read_parquet(file_path)
 
@@ -105,9 +114,9 @@ class FeatureStore:
 
         return corr_df
 
-    def build_master_matrix(self) -> pd.DataFrame:
+    def build_master_matrix(self, category=None) -> pd.DataFrame:
         """The main pipeline method that executes all steps."""
-        df = self.load_and_merge()
+        df = self.load_and_merge(category)
         df = self.engineer_business_logic(df)
         df = self.align_time_series(df)
 
@@ -120,8 +129,8 @@ if __name__ == "__main__":
     store = FeatureStore()
 
     # Run the pipeline
-    master_matrix = store.build_master_matrix()
+    master_matrix = store.build_master_matrix(category='Macro Sentiment')
 
     # Display the last 5 rows to verify it worked
-    print("\n--- Latest Market Data ---")
-    print(master_matrix[['diesel_price', 'feature_retail_inventory_spread', 'target_cass_inferred_rate']].tail())
+    # print("\n--- Latest Market Data ---")
+    # print(master_matrix[['diesel_price', 'feature_retail_inventory_spread', 'target_cass_inferred_rate']].tail())

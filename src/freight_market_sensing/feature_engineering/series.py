@@ -2,19 +2,19 @@ SERIES_MAP = {
     # ==========================================
     # 1. Capital Equipment Pricing
     # ==========================================
-    'PCU336120336120': {'name': 'ppi_heavy_truck_cab_mfg', 'category': 'Equipment Pricing', 'source': 'FRED'},
-    'PCU336212336212': {'name': 'ppi_truck_trailer_mfg', 'category': 'Equipment Pricing', 'source': 'FRED'},
-    'PCU33633363':     {'name': 'ppi_motor_vehicle_parts', 'category': 'Equipment Pricing', 'source': 'FRED'},
-    'WPU111':          {'name': 'ppi_general_machinery', 'category': 'Equipment Pricing', 'source': 'FRED'},
-    'PCU333924333924': {'name': 'ppi_material_handling_equip', 'category': 'Equipment Pricing', 'source': 'FRED'},
+    'PCU336120336120':   {'name': 'ppi_heavy_truck_cab_mfg', 'category': 'Equipment Pricing', 'source': 'FRED'},
+    'PCU336212336212':   {'name': 'ppi_truck_trailer_mfg', 'category': 'Equipment Pricing', 'source': 'FRED'},
+    'PCU33633363':       {'name': 'ppi_motor_vehicle_parts', 'category': 'Equipment Pricing', 'source': 'FRED'},
+    'WPU111':            {'name': 'ppi_general_machinery', 'category': 'Equipment Pricing', 'source': 'FRED'},
+    'PCU333924333924':   {'name': 'ppi_material_handling_equip', 'category': 'Equipment Pricing', 'source': 'FRED'},
 
     # ==========================================
     # 2. Raw Materials & Operating Expenses
     # ==========================================
-    'PALUMUSDM': {'name': 'global_aluminum_price', 'category': 'Raw Materials', 'source': 'FRED'},
-    'WPU102501': {'name': 'ppi_aluminum_shapes', 'category': 'Raw Materials', 'source': 'FRED'},
-    'WPU101':    {'name': 'ppi_iron_steel', 'category': 'Raw Materials', 'source': 'FRED'},
-    'GASDESW':   {'name': 'diesel_price', 'category': 'Raw Materials', 'source': 'FRED'},
+    'PALUMUSDM':         {'name': 'global_aluminum_price', 'category': 'Raw Materials', 'source': 'FRED'},
+    'WPU102501':         {'name': 'ppi_aluminum_shapes', 'category': 'Raw Materials', 'source': 'FRED'},
+    'WPU101':            {'name': 'ppi_iron_steel', 'category': 'Raw Materials', 'source': 'FRED'},
+    'GASDESW':           {'name': 'diesel_price', 'category': 'Raw Materials', 'source': 'FRED'},
 
     # ==========================================
     # 3. Physical Output & Freight Volume
