@@ -41,27 +41,8 @@ class FeatureStore:
             # Ensure 'date' is a proper datetime object
             df['date'] = pd.to_datetime(df['date'])
 
-            # =======================================================
-            # DJTA INTERCEPTION: Convert Daily Stock Data to Weekly
-            # =======================================================
-            if 'dow_jones_transportation_avg' in feature_name.lower():
-                print("Intercepting DJTA: Downsampling from Daily to Weekly (Friday)...")
-                
-                # Temporarily set date as index for resampling
-                df = df.set_index('date')
-                
-                # Create different resampling features
-                djta_mean = df.resample('W-FRI').mean().rename(columns={'value': 'djta_weekly_mean'})
-                djta_vol = df.resample('W-FRI').std().rename(columns={'value': 'djta_weekly_volatility'})
-                djta_last = df.resample('W-FRI').last().rename(columns={'value': 'djta_weekly_last'})
-                
-                # Recombine all three and reset the index back to a 'date' column
-                df = pd.concat([djta_mean, djta_vol, djta_last], axis=1).reset_index()
-
-            else:
-                # For all standard features, just rename the generic 'value' column
-                df = df.rename(columns={'value': feature_name})
-            # =======================================================
+            # For all standard features, just rename the generic 'value' column
+            df = df.rename(columns={'value': feature_name})
 
             # Merge into the master dataframe
             if master_df.empty:
@@ -88,6 +69,18 @@ class FeatureStore:
                     df['retail_inventory_to_sales_ratio'] - df['total_inventory_to_sales_ratio']
             )
 
+        # =======================================================
+        # DJTA INTERCEPTION: Convert Daily Stock Data to Weekly
+        # =======================================================
+        if 'dow_jones_transportation_avg' in df.columns:
+            print("Intercepting DJTA: Downsampling from Daily to Weekly (Friday)...")
+
+            # Create different resampling features
+            df['djta_mean'] = df['dow_jones_transportation_avg'].resample('W-FRI').mean()
+            df['djta_vol'] = df['dow_jones_transportation_avg'].resample('W-FRI').std()
+            df['djta_last'] = df['dow_jones_transportation_avg'].resample('W-FRI').last()
+
+        df.to_clipboard()
         return df
 
     def align_time_series(self, df) -> pd.DataFrame:
