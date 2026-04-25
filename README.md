@@ -1,4 +1,4 @@
-# Freight Market Sensing: Physics-Based S&OP Capacity Forecasting
+# Freight Market Sensing: Commercial Vehicle Demand Forecasting
 
 ## Project Overview
 This project implements a machine learning forecasting pipeline designed specifically for the heavy commercial vehicle and trailer manufacturing industries. By filtering out macroeconomic noise and focusing on the physical "lead-lag" reality of the U.S. freight network, this tool predicts the 90-day forward baseline for commercial equipment demand. 
