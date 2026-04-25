@@ -1,69 +1,72 @@
-import pandas as pd
-import xgboost as xgb
-import matplotlib.pyplot as plt
 import seaborn as sns
-from features import FeatureStore
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Corrected absolute import based on your project structure
+from src.freight_market_sensing.feature_engineering.features import FeatureStore
 
 
-def rank_features():
-    print("Loading Master Matrix...")
+def analyze_champion_correlation():
+    print("-" * 50)
+    print("Loading Data for Final Correlation Check...")
     store = FeatureStore()
     df = store.build_master_matrix()
 
-    print("-" * 50)
-
-    print("Preparing Data for Trailer Demand Ranking...")
-
-    # 1. NEW TARGET
-    target_col = 'trailer_production_volume'
-    # target_col = 'heavy_truck_sales'
-
-    # Drop the target, the raw Cass components, and the other target (truck sales)
-    features_to_drop = [
-        'cass_shipments',
-        'cass_expenditures',
-        'trailer_production_volume',
-        # 'heavy_truck_sales',
-        target_col
+    # The Final "Dream Team" Roster + The Target Variable
+    champions = [
+        'ppi_heavy_truck_cab_mfg',  # Equipment Pricing
+        'industrial_production',  # Physical Output
+        'mfg_inventory_to_sales_ratio',  # Supply Chain Bullwhip
+        'consumer_sentiment',  # Macro Sentiment
+        'cass_shipments',  # Carrier Pricing
+        'trailer_production_volume'  # Target (To see predictive power)
     ]
 
-    # 2. Clean the data for the training run
-    ml_df = df.dropna(subset=[target_col]).copy()
+    # Safety Check: Ensure all champions are in the master matrix
+    missing_cols = [col for col in champions if col not in df.columns]
+    if missing_cols:
+        print(f"Error: Missing columns in master matrix: {missing_cols}")
+        print("Please check data_ingestion.py and run it again.")
+        return
 
-    X = ml_df.drop(columns=features_to_drop, errors='ignore')
-    y = ml_df[target_col]
+    # Isolate the dataframe and drop NaNs to ensure the math aligns on the exact same dates
+    ml_df = df[champions].dropna().copy()
 
-    print(f"Analyzing {len(X.columns)} features against {target_col}...")
+    # Calculate Pearson correlation using your built-in FeatureStore method
+    print("Calculating Pearson Correlation Matrix...")
+    corr_matrix = store.correlation_check(ml_df)
 
-    # 3. Initialize and train a basic XGBoost Regressor
-    model = xgb.XGBRegressor(
-        n_estimators=100,
-        learning_rate=0.1,
-        max_depth=4,
-        random_state=42
+    # Generate the Heatmap Plot
+    print("Generating Heatmap...")
+    plt.figure(figsize=(12, 10))
+
+    # Create a mask to hide the upper triangle (removes duplicate squares for a cleaner chart)
+    mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
+
+    # Draw the heatmap using seaborn
+    sns.heatmap(
+        corr_matrix,
+        mask=mask,
+        annot=True,  # Show the actual R value numbers
+        fmt=".2f",  # Round to 2 decimal places
+        cmap='coolwarm',  # Red for positive correlation, Blue for negative
+        vmin=-1,  # Lock scale bottom at -1
+        vmax=1,  # Lock scale top at +1
+        square=True,
+        linewidths=.5
     )
-    model.fit(X, y)
 
-    # 4. Extract Feature Importances
-    importance_df = pd.DataFrame({
-        'Feature': X.columns,
-        'Importance': model.feature_importances_
-    }).sort_values(by='Importance', ascending=False)
-
-    print("\nTop 5 Most Influential Features for Truck Sales:")
-    print(importance_df.head(5).to_string(index=False))
-
-    # 5. Plot the results visually
-    plt.figure(figsize=(12, 8))
-    sns.barplot(x='Importance', y='Feature', data=importance_df, hue='Feature', palette='magma', legend=False)
-    plt.title('Macroeconomic Drivers of Trailer Sales', fontsize=16)
-    plt.xlabel('XGBoost Relative Feature Importance', fontsize=12)
-    plt.ylabel('Economic Indicator', fontsize=12)
+    plt.title("S&OP Roster Validation: Champion Feature Correlation", fontsize=16, pad=20)
+    plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
 
-    plt.savefig('../../trailer_sales_drivers.png')
-    print("\nVisual saved as 'trailer_sales_drivers04202026.png' in your project root.")
+    file_name = '../../champion_correlation.png'
+    plt.savefig(file_name)
+    plt.close()
+
+    print(f"Saved '{file_name}' to your project root!")
+    print("-" * 50 + "\n")
 
 
 if __name__ == "__main__":
-    rank_features()
+    analyze_champion_correlation()

@@ -1,12 +1,12 @@
 import pandas as pd
 from pathlib import Path
-from feature_engineering.series import SERIES_MAP
+from src.freight_market_sensing.feature_engineering.series import SERIES_MAP
 
 
 class FeatureStore:
     def __init__(self):
         # Dynamically find the data directory
-        self.base_path = Path(__file__).resolve().parent.parent.parent
+        self.base_path = Path(__file__).resolve().parent.parent.parent.parent
         self.data_dir = self.base_path / 'data'
 
         if not self.data_dir.exists():
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     # PIPELINE CONTROL PANEL
     # =======================================================
     # Options: 'trailer_production_volume', 'heavy_truck_sales', 'target_cass_inferred_rate'
-    ACTIVE_TARGET = 'heavy_truck_sales'  
+    ACTIVE_TARGET = 'trailer_production_volume'
     # =======================================================
 
     # 1. Hit the hard drive ONCE to build the full reality
