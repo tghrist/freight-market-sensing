@@ -163,13 +163,58 @@ def generate_live_forecast():
     print(f"Forecast generated for: {live_df.index[0].date()} to {live_df.index[-1].date()}")
 
     # Format a clean export dataframe
-    export_df = live_df[['forecast_production_volume']].round(0)  # Round to whole trailers
+    export_df = live_df[['forecast_production_volume']].round(1)  # Round to whole trailers
 
     # Save directly to your root directory for Power BI/Excel consumption
     export_filename = '../../live_90_day_forecast.csv'
     export_df.to_csv(export_filename)
-
     print(f"Success! Saved '{export_filename}' to your project root.")
+
+    # =======================================================
+    # VISUALIZATION: Combine Actuals and Forecast
+    # =======================================================
+    print("\nGenerating Combined Live Forecast Chart...")
+    plt.figure(figsize=(14, 7))
+
+    # 1. Isolate the Historical Actuals (Zooming in on 2023 to Present for better scaling)
+    historical_actuals = df[base_target].dropna()
+    recent_actuals = historical_actuals.loc['2023-01-01':]
+
+    # Plot the historical line
+    plt.plot(recent_actuals.index, recent_actuals, label='Trailer Index (IPG336212S)', color='blue', linewidth=2)
+
+    # 2. Bridge the Visual Gap
+    # Get the exact date and volume of the very last known historical point
+    last_known_date = recent_actuals.index[-1]
+    last_known_volume = recent_actuals.iloc[-1]
+
+    # Prepend that last historical point to our forecast data so the line connects seamlessly
+    forecast_dates = [last_known_date] + live_df.index.tolist()
+    forecast_volumes = [last_known_volume] + live_df['forecast_production_volume'].tolist()
+
+    # Plot the forward-looking forecast
+    plt.plot(forecast_dates, forecast_volumes, label='90-Day AI Forecast', color='red', linestyle='--', linewidth=2)
+
+    # 3. Add the "Today" vertical divider
+    plt.axvline(x=last_known_date, color='black', linestyle=':', label='Forecast Transition')
+
+    # =======================================================
+    # CORRECTED NOMENCLATURE: Index vs. Absolute Volume
+    # =======================================================
+    plt.title('Trailer Production Volume: Historical Production Index vs. 90-Day AI Forecast', fontsize=16, pad=15)
+
+    # Clearly define the Y-Axis as a 2017 Baseline Index
+    plt.ylabel('Durable Goods: Truck Trailer Index (2017=100)', fontsize=12)
+
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    chart_filename = '../../live_forecast_combined.png'
+    plt.savefig(chart_filename)
+    plt.close()
+
+    print(f"Success! Saved combined chart '{chart_filename}' to your project root.")
     print("-" * 50 + "\n")
 
 
