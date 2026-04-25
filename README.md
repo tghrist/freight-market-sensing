@@ -1,62 +1,48 @@
-# Freight Market Sensing: Multi-Modal Nowcasting & Forecasting
+# Freight Market Sensing: Physics-Based S&OP Capacity Forecasting
 
 ## Project Overview
-This project implements a two-stage predictive engine designed for the commercial vehicle and manufacturing industries. By bridging the 45-day reporting lag of traditional government economic data, this tool "senses" current market conditions and forecasts spot rate volatility across three distinct transportation modes: Dry Van, Flatbed, and LTL/Specialized.
+This project implements a machine learning forecasting pipeline designed specifically for the heavy commercial vehicle and trailer manufacturing industries. By filtering out macroeconomic noise and focusing on the physical "lead-lag" reality of the U.S. freight network, this tool predicts the 90-day forward baseline for commercial equipment demand. 
 
+The system acts as an unbiased, data-driven constraint for Sales & Operations Planning (S&OP). It is explicitly designed to identify when internal sales surges are driven by "Borrowed Demand" (regulatory pull-forwards or panic buying) versus true macroeconomic recovery, preventing factories from over-leveraging their cost structures during temporary bubbles.
 
+## The Architecture: The "Category Champion" Strategy
+Feeding an XGBoost model dozens of raw, highly correlated economic indicators typically results in "coincident traps" and the memorization of historical anomalies (like the 2020-2021 COVID-19 supply chain crisis). 
 
-The system is built to support Sales & Operations Planning (S&OP) by providing actionable intelligence within the critical 90-day industry horizon.
+To solve this, this pipeline utilizes a **SHAP (SHapley Additive exPlanations) Value Tournament**. 
 
-## The Two-Stage Sensing Engine
+We organized 25+ macroeconomic indicators into six distinct logical "Categories" that govern supply chain physics. The model evaluates every feature within a category and drafts a single "Champion" indicator—the one that provides the cleanest, most mathematically sound predictive signal without falling into historical traps.
 
-### 1. The Nowcast (0-30 Days)
-Uses high-frequency "Fast" signals (Diesel prices, Weekly Rail Traffic, VIX) to estimate current market indices before official government releases. This solves the "rearview mirror" problem in logistics planning.
+### The 6 S&OP Feature Categories
+1. **Equipment Pricing:** The capital bottlenecks (cost to build and buy).
+2. **Raw Materials:** The upstream input costs.
+3. **Physical Output:** The actual volume of goods manufactured across the U.S.
+4. **Supply Chain Bullwhip:** Inventory-to-Sales ratios identifying where freight is trapped.
+5. **Macro Sentiment:** The psychological and leading economic indicators.
+6. **Carrier Pricing:** The dynamics of the transportation spot and contract markets.
 
-### 2. The Near-Term Forecast (60-90 Days)
-Utilizes structural leading indicators (Housing Starts, Durable Goods Orders, Yield Curve) to predict the directional trend and volatility for the upcoming quarter.
+## The Feature Roster
+After running the SHAP tournament and applying a Pearson Correlation filter to eliminate multicollinearity (e.g., stripping out redundant inflation signals), the model relies on these highly independent, foundational pillars of the economy:
 
-
-
-## Feature Store (Input Variables)
-The model consumes 15+ macroeconomic and industrial indicators sourced primarily from the FRED API.
-
-| ID | Description | Category | Lag |
+| Category | Champion Feature | FRED Series ID | Predictive Role |
 | :--- | :--- | :--- | :--- |
-| **WEI** | Weekly Economic Index | Macro Economics | **Fast (Weekly)** |
-| **GASDESW** | Diesel Price | Commodity | **Fast (Weekly)** |
-| **RAILFRTINTERMODAL** | Rail Freight Intermodal Traffic | Freight | **Fast (Weekly)** |
-| **VIXCLS** | CBOE Volatility Index (VIX) | Sentiment | **Fast (Daily)** |
-| **T10Y2Y** | 10Yr - 2Yr Interest Rate Spread | Inflation/Cost | **Fast (Daily)** |
-| **ICSA** | Initial Unemployment Claims | Labor Market | **Fast (Weekly)** |
-| **HOUST** | Housing Starts | Construction | Medium (Leading) |
-| **DGORDER** | New Orders (Durable Goods) | Manufacturing | Medium (Leading) |
-| **ADXTNO** | New Orders (Excl. Transp) | Manufacturing | Medium (Leading) |
-| **MANEMP** | All Employees: Manufacturing | Labor Market | Medium |
-| **UMCSENT** | UofM Consumer Sentiment | Sentiment | Medium |
-| **PALUMUSDM** | Global Price of Aluminum | Commodity | Medium |
-| **HTRUCKSSAAR** | Heavy Truck Sales | Capital Goods | Medium |
-| **INDPRO** | Industrial Production | Manufacturing | Slow (30+ days) |
-| **TSIFRGHT** | Freight TSI | Freight | Slow (45+ days) |
-| **WPU101** | PPI: Iron and Steel | Raw Materials | Slow (Monthly) |
-| **WPU102501** | PPI: Aluminum Mill Shapes | Raw Materials | Slow (Monthly) |
-| **PCU3362123362** | PPI Truck Manufacturing | Manufacturing | Slow (Monthly) |
-| **RETAILSMPCSM** | Sales/Inventories Ratio | S&OP | Slow (Monthly) |
+| **Physical Output** | Industrial Production | `INDPRO` | The broad Macro Anchor |
+| **Carrier Pricing** | Cass Freight Shipments | `FRGSHPUSM649NCIS` | The Physical Volume Driver |
+| **Equipment Pricing** | PPI: Heavy Truck Cabs | `PCU336120336120` | The Capital Cost Constraint |
+| **Supply Chain Bullwhip** | Mfg Inventory-to-Sales | `MNFCTRIRSA` | The Supply Chain Choke Point |
+| **Macro Sentiment** | Consumer Sentiment | `UMCSENT` | The Psychological Leading Proxy |
 
-## Validation Framework (Target Variables)
-Model performance is validated against four primary "Ground Truth" indicators.
+## Target Variable & The "Delta" Fix
+**Target:** `IPG336212S` (Industrial Production: Truck Trailer Manufacturing)
+*Note: This is a Seasonally Adjusted Index where 2017 = 100, measuring relative market velocity rather than absolute unit counts.*
 
-| ID | Description | Source |
-| :--- | :--- | :--- |
-| **PCU4841214841212** | PPI: Dry Van (Long-Distance) | FRED |
-| **PCU484122484122** | PPI: LTL/Temperature Control | FRED |
-| **PCU4842304842306** | PPI: Specialized Freight (Flatbed) | FRED |
-| **Inferred Rate** | Cass Expenditures / Cass Shipments | Calculated |
+**The Extrapolation Problem:** Tree-based models (like XGBoost) cannot extrapolate to predict unprecedented market lows or highs if they haven't seen them in the training data. 
+**The Delta Solution:** Instead of predicting absolute volume, the engine time-shifts the data and predicts the **90-Day Forward Percentage Change (Delta)**. It then reconstructs that percentage back into the 2017 baseline index. This allows the model to accurately forecast massive market crashes and recoveries based on the *rate of change* in the Champion Features.
 
 ## Technical Implementation
 - **Data Engineering:** Automated ETL pipeline using `fredapi` and `pandas`.
-- **Normalization:** Z-score scaling and Percent Change transforms to align multi-speed time series.
-- **Machine Learning:** Comparison of XGBoost and Time-Series Decomposition models.
-- **Visualization:** Interactive dashboarding to visualize "Current Pulse" vs. "Forecasted Trend."
+- **Feature Selection:** Iterative SHAP value analysis and Pearson correlation matrices.
+- **Machine Learning Engine:** `xgboost.XGBRegressor` utilizing chronological training splits to prevent data leakage (time travel).
+- **Time-Shifting:** Built-in 90-day target lagging to transform the model from a "Nowcast" into a true predictive S&OP tool. 
 
 ---
-*Developed for the AI Industrial Revolution to support data-driven S&OP decision-making.*
+*Developed to bridge the gap between macroeconomic data and physical manufacturing reality.*
