@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from src.freight_market_sensing.feature_engineering.series import SERIES_MAP
+from feature_engineering.series import SERIES_MAP
 
 
 class FeatureStore:
@@ -12,22 +12,14 @@ class FeatureStore:
         if not self.data_dir.exists():
             raise FileNotFoundError("Data directory not found. Run data_ingestion.py first.")
 
-    def load_and_merge(self, category) -> pd.DataFrame:
+    def load_and_merge(self) -> pd.DataFrame:
         """Reads all Parquet files and merges them into a single timeline."""
         print("Loading and merging Parquet files...")
         master_df = pd.DataFrame()
 
-        valid_features = [
-            meta['name'] for meta in SERIES_MAP.values()
-            if meta['category'] == category
-        ]
-
         # Iterate through every .parquet file in the directory
         for file_path in self.data_dir.glob("*.parquet"):
             feature_name = file_path.stem  # e.g., 'diesel_price'
-
-            if feature_name not in valid_features:
-                continue
 
             # Load the file
             df = pd.read_parquet(file_path)
@@ -91,6 +83,28 @@ class FeatureStore:
 
         df.to_clipboard()
         return df
+    
+    def get_category_matrix(self, master_df: pd.DataFrame, category: str, target_name: str) -> pd.DataFrame:
+        """
+        Slices the Master Matrix to return only features from the requested category,
+        ensuring the specified target variable is always included for XGBoost.
+        """
+        print(f"Slicing matrix for category: {category} | Target: {target_name}")
+        
+        # 1. Get the VIP list of features for this category from the dictionary
+        valid_features = [
+            meta['name'] for meta in SERIES_MAP.values() 
+            if meta['category'] == category
+        ]
+        
+        # 2. Add the dynamic Target Variable so the AI has something to predict
+        if target_name not in valid_features:
+            valid_features.append(target_name)
+            
+        # 3. Filter the dataframe safely
+        cols_to_keep = [col for col in valid_features if col in master_df.columns]
+        
+        return master_df[cols_to_keep]
 
     def align_time_series(self, df) -> pd.DataFrame:
         """Handles missing data caused by weekly vs. monthly reporting."""
@@ -114,9 +128,9 @@ class FeatureStore:
 
         return corr_df
 
-    def build_master_matrix(self, category=None) -> pd.DataFrame:
+    def build_master_matrix(self) -> pd.DataFrame:
         """The main pipeline method that executes all steps."""
-        df = self.load_and_merge(category)
+        df = self.load_and_merge()
         df = self.engineer_business_logic(df)
         df = self.align_time_series(df)
 
@@ -125,12 +139,36 @@ class FeatureStore:
 
 
 if __name__ == "__main__":
-    # Initialize the class
     store = FeatureStore()
 
-    # Run the pipeline
-    master_matrix = store.build_master_matrix(category='Macro Sentiment')
+    # =======================================================
+    # PIPELINE CONTROL PANEL
+    # =======================================================
+    # Options: 'trailer_production_volume', 'heavy_truck_sales', 'target_cass_inferred_rate'
+    ACTIVE_TARGET = 'heavy_truck_sales'  
+    # =======================================================
 
-    # Display the last 5 rows to verify it worked
-    # print("\n--- Latest Market Data ---")
-    # print(master_matrix[['diesel_price', 'feature_retail_inventory_spread', 'target_cass_inferred_rate']].tail())
+    # 1. Hit the hard drive ONCE to build the full reality
+    master_matrix = store.build_master_matrix()
+
+    # 2. Instantly slice out your categories for the tournament, injecting the active target
+    sentiment_df = store.get_category_matrix(
+        master_df=master_matrix, 
+        category='Macro Sentiment', 
+        target_name=ACTIVE_TARGET
+    )
+    
+    pricing_df = store.get_category_matrix(
+        master_df=master_matrix, 
+        category='Equipment Pricing', 
+        target_name=ACTIVE_TARGET
+    )
+
+    print("\n--- MATRIX AUDIT ---")
+    print(f"Targeting: {ACTIVE_TARGET}")
+    print(f"Sentiment Matrix Shape: {sentiment_df.shape}")
+    print(f"Pricing Matrix Shape:   {pricing_df.shape}")
+    
+    # Quick visual check to ensure the active target was attached
+    print("\nColumns in Sentiment Matrix:")
+    print(sentiment_df.columns.tolist())
