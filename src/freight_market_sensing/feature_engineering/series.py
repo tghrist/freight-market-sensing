@@ -55,7 +55,7 @@ SERIES_MAP = {
     'PCU484230484230':   {'name': 'target_ppi_flatbed', 'category': 'Carrier Pricing', 'source': 'FRED'},
     'FRGEXPUSM649NCIS':  {'name': 'cass_expenditures', 'category': 'Carrier Pricing', 'source': 'FRED'},
     'FRGSHPUSM649NCIS':  {'name': 'cass_shipments', 'category': 'Carrier Pricing', 'source': 'FRED'},
-    # 'ENG_CASS_RATE': {'name': 'target_cass_inferred_rate', 'category': 'Carrier Pricing', 'source': 'Engineered'},
+    'ENG_CASS_RATE': {'name': 'target_cass_inferred_rate', 'category': 'Carrier Pricing', 'source': 'Engineered'},
 
     # ==========================================
     # Targets
