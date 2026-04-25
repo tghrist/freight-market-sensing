@@ -23,7 +23,6 @@ var/
 # --- Data & Project Specifics ---
 # Do not track raw or processed data files (protects proprietary proxy data)
 data/
-*.csv
 *.xlsx
 *.parquet
 *.sqlite
