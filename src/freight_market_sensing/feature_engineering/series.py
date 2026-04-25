@@ -35,6 +35,7 @@ SERIES_MAP = {
     'WHLSLRIRSA':        {'name': 'wholesale_inventory_to_sales_ratio', 'category': 'Supply Chain Bullwhip', 'source': 'FRED'},
     'MNFCTRIRSA':        {'name': 'mfg_inventory_to_sales_ratio', 'category': 'Supply Chain Bullwhip', 'source': 'FRED'},
     'IPG3363S':          {'name': 'production_motor_vehicle_parts', 'category': 'Supply Chain Bullwhip', 'source': 'FRED'},
+    'ENG_SPREAD':        {'name': 'feature_retail_inventory_spread', 'category': 'Supply Chain Bullwhip', 'source': 'Engineered'},
 
     # ==========================================
     # 5. Macro Sentiment & Market Chaos
@@ -54,6 +55,7 @@ SERIES_MAP = {
     'PCU484230484230':   {'name': 'target_ppi_flatbed', 'category': 'Carrier Pricing', 'source': 'FRED'},
     'FRGEXPUSM649NCIS':  {'name': 'cass_expenditures', 'category': 'Carrier Pricing', 'source': 'FRED'},
     'FRGSHPUSM649NCIS':  {'name': 'cass_shipments', 'category': 'Carrier Pricing', 'source': 'FRED'},
+    # 'ENG_CASS_RATE': {'name': 'target_cass_inferred_rate', 'category': 'Carrier Pricing', 'source': 'Engineered'},
 
     # ==========================================
     # Targets
