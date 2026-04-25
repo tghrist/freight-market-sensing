@@ -1,11 +1,15 @@
 import xgboost as xgb
 import shap
 import matplotlib.pyplot as plt
-import pandas as pd
+from pathlib import Path
 
 # Corrected absolute imports based on the new project structure
 from src.freight_market_sensing.feature_engineering.features import FeatureStore
 from src.freight_market_sensing.feature_engineering.series import SERIES_MAP
+
+BASE_PATH = Path(__file__).resolve().parent.parent.parent
+SHAP_DIR = BASE_PATH / 'shap_charts'
+SHAP_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def analyze_category(category_name: str, target_col: str):
@@ -58,7 +62,7 @@ def analyze_category(category_name: str, target_col: str):
 
     # Create a clean filename (e.g., 'shap_supply_chain_bullwhip.png')
     safe_category_name = category_name.lower().replace(' ', '_').replace('&', 'and')
-    file_name = f'../../shap_{safe_category_name}.png'
+    file_name = f'{SHAP_DIR}/shap_{safe_category_name}.png'
 
     plt.savefig(file_name)
     plt.close()  # Critical: Closes the plot so the next loop starts with a blank canvas
