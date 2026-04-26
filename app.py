@@ -1,21 +1,24 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import altair as alt
 import json
 
 # 1. Page Configuration (Must be the first Streamlit command)
 st.set_page_config(
-    page_title="Commercial Vehicle Demand Radar",
+    page_title="CV & Trailer Demand Forecast",
     page_icon="🚛",
     layout="wide"
 )
 
 # 2. Title and Executive Summary
-st.title("Freight Market Sensing: 90-Day Commercial Vehicle Demand Forecast")
+st.title("Commercial Vehicle & Trailer Demand Forecast")
 st.markdown("""
-This application acts as a physics-based macroeconomic constraint for commercial equipment manufacturing. 
-It filters out historical anomalies and regulatory pull-forwards to identify the true, sustainable 
-macroeconomic baseline for trailer demand.
+Designed for Tier 1 commercial vehicle suppliers, this machine learning pipeline predicts the 90-day forward trajectory
+of North American trailer manufacturing. Rather than forecasting volatile freight spot rates, this engine tracks the
+'heavy physics' of the supply chain—capital costs, inventory bottlenecks, and physical output—to predict actual OEM
+assembly line volume. This provides component manufacturers with an unbiased, data-driven anchor for Sales and
+Operations Planning.
 """)
 
 st.divider()
@@ -35,6 +38,23 @@ def load_data():
     return history_df, forecast_df
 
 
+def forecast_slope_percentage(df: pd.DataFrame) -> float:
+    # Create the x-axis
+    df['row_number'] = range(1, len(df) + 1)
+
+    # Calculate the linear trendline (slope = points per period)
+    slope, intercept = np.polyfit(df['row_number'], df['forecast_production_volume'], 1)
+
+    # Calculate the starting and ending values of that smoothed trendline
+    start_value = (slope * 1) + intercept
+    end_value = (slope * len(df)) + intercept
+
+    # Calculate the true percentage change across the forecast window
+    total_pct_change = ((end_value - start_value) / start_value) * 100
+
+    return total_pct_change
+
+
 try:
     history_df, forecast_df = load_data()
 
@@ -42,8 +62,18 @@ try:
     col1, col2, col3 = st.columns(3)
 
     with col1:
+        # Get the final index value
         latest_index = forecast_df['forecast_production_volume'].iloc[-1]
-        st.metric(label="90-Day Target Index (2017=100)", value=f"{latest_index:.1f}")
+
+        # Calculate the trend percentage using your new function
+        fc_trend_pct = forecast_slope_percentage(forecast_df)
+
+        # Use the 'delta' parameter to show the slope
+        st.metric(
+            label="90-Day Target Index (2017=100)",
+            value=f"{latest_index:.1f}",
+            delta=f"{fc_trend_pct:+.2f}% (Trend)"
+        )
 
     with col2:
         st.metric(label="Forecast Status", value="Stable / Flat")
@@ -56,7 +86,7 @@ try:
     # =======================================================
     # 5. Advanced Altair Chart Integration
     # =======================================================
-    st.subheader("Master Capacity Plan: Historical Index vs. AI Forecast")
+    st.subheader("Trailer Production Index: 90-Day Forecast")
 
     # 1. Prepare the Data
     combined_index = history_df.index.union(forecast_df.index)
@@ -98,7 +128,7 @@ try:
     st.altair_chart(chart, use_container_width=True)
 
     st.caption(
-        "Note: This baseline represents the macro-supported demand limit. Volume above this line should be treated as high-risk regulatory hedging.")
+        "Note: This baseline represents a 90-day outlook of OEM trailer production, driven by underlying freight and economic fundamentals.")
 
 except FileNotFoundError:
     st.error("Data files not found. Please run the `models.py` export pipeline first.")
