@@ -168,11 +168,11 @@ except FileNotFoundError:
 
 st.sidebar.divider()
 
-st.sidebar.markdown("### Champion Features")
+st.sidebar.markdown("### Predictive Model Inputs")
 st.sidebar.markdown("""
-* `cass_shipments`
-* `ppi_heavy_truck_cab_mfg`
-* `industrial_production`
-* `consumer_sentiment`
-* `mfg_inventory_to_sales_ratio`
+* [Cass Shipments](https://www.cassinfo.com/freight-audit-payment/cass-transportation-indexes/cass-freight-index)
+* [PPI: Heavy Truck Cabs](https://fred.stlouisfed.org/series/PCU336120336120)
+* [Industrial Production](https://fred.stlouisfed.org/series/INDPRO)
+* [Consumer Sentiment](https://fred.stlouisfed.org/series/UMCSENT)
+* [Mfg Inventory-to-Sales](https://fred.stlouisfed.org/series/MNFCTRIRSA)
 """)
