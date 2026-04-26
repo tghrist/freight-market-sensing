@@ -2,6 +2,8 @@ import pandas as pd
 import xgboost as xgb
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_percentage_error
+import json
+from datetime import datetime
 
 from src.freight_market_sensing.feature_engineering.features import FeatureStore
 
@@ -77,6 +79,23 @@ def run_backtest():
     mape = mean_absolute_percentage_error(actual_future_volume, test_df['forecast_volume'])
     print(f"\nModel Performance:")
     print(f"MAPE (Mean Absolute Percentage Error): {mape:.2%}")
+
+    # =======================================================
+    # Export Metrics to JSON for Streamlit App
+    # =======================================================
+    metrics_dict = {
+        "mape": f"{mape:.2%}",
+        "train_end": str(train_df.index[-1].date()),
+        "test_start": str(test_df.index[0].date()),
+        "test_end": str(test_df.index[-1].date()),
+        "last_ran": datetime.now().strftime("%Y-%m-%d")
+    }
+
+    metrics_filename = '../../backtest_metrics.json'
+    with open(metrics_filename, 'w') as f:
+        json.dump(metrics_dict, f, indent=4)
+
+    print(f"Saved metrics to '{metrics_filename}'")
 
     print("\nGenerating Backtest Chart...")
     plt.figure(figsize=(14, 7))
@@ -171,6 +190,14 @@ def generate_live_forecast():
     print(f"Success! Saved '{export_filename}' to your project root.")
 
     # =======================================================
+    # Export Historical Actuals for Streamlit (2024 to Present)
+    # =======================================================
+    historical_export = df[[base_target]].dropna().loc['2024-01-01':]
+    historical_export.rename(columns={base_target: 'historical_volume'}, inplace=True)
+    historical_export.to_csv('../../historical_actuals.csv')
+    print("Success! Saved 'historical_actuals.csv' for Streamlit consumption.")
+
+    # =======================================================
     # VISUALIZATION: Combine Actuals and Forecast
     # =======================================================
     print("\nGenerating Combined Live Forecast Chart...")
@@ -220,5 +247,5 @@ def generate_live_forecast():
 
 if __name__ == "__main__":
     # Comment out the backtest and run the live forecast!
-    # run_backtest()
-    generate_live_forecast()
+    run_backtest()
+    # generate_live_forecast()
