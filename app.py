@@ -83,7 +83,7 @@ try:
         color=alt.Color('Data Type:N', scale=alt.Scale(
             domain=['Historical Actuals', '90-Day AI Forecast'],
             range=['#1f77b4', '#ff0000']  # Blue and Red
-        )),
+        ), legend=alt.Legend(orient='bottom', title=None)),  # <--- MOVED TO BOTTOM
         # Reintroduce the dashed line for the forecast
         strokeDash=alt.condition(
             alt.datum['Data Type'] == '90-Day AI Forecast',
