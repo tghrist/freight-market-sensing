@@ -58,77 +58,122 @@ def forecast_slope_percentage(df: pd.DataFrame) -> float:
 try:
     history_df, forecast_df = load_data()
 
-    # 4. Layout: Executive Metrics Row (Keep your existing metrics here!)
-    col1, col2, col3 = st.columns(3)
+    # =======================================================
+    # 4. Layout: Tabs Configuration
+    # =======================================================
+    tab1, tab2 = st.tabs(["Executive Dashboard", "Model Explainability (Features)"])
 
-    with col1:
-        # Get the final index value
-        latest_index = forecast_df['forecast_production_volume'].iloc[-1]
+    # -------------------------------------------------------
+    # TAB 1: EXECUTIVE DASHBOARD
+    # -------------------------------------------------------
+    with tab1:
+        # Layout: Executive Metrics Row
+        col1, col2, col3 = st.columns(3)
 
-        # Calculate the trend percentage using your new function
-        fc_trend_pct = forecast_slope_percentage(forecast_df)
+        with col1:
+            # Get the final index value
+            latest_index = forecast_df['forecast_production_volume'].iloc[-1]
 
-        # Use the 'delta' parameter to show the slope
-        st.metric(
-            label="90-Day Target Index (2017=100)",
-            value=f"{latest_index:.1f}",
-            delta=f"{fc_trend_pct:+.2f}% (Trend)"
+            # Calculate the trend percentage using your new function
+            fc_trend_pct = forecast_slope_percentage(forecast_df)
+
+            # Use the 'delta' parameter to show the slope
+            st.metric(
+                label="90-Day Target Index (2017=100)",
+                value=f"{latest_index:.1f}",
+                delta=f"{fc_trend_pct:+.2f}% (Trend)"
+            )
+
+        with col2:
+            st.metric(label="Forecast Status", value="Stable / Flat")
+
+        with col3:
+            st.metric(label="Primary Market Driver", value="Cass Freight Shipments")
+
+        st.divider()
+
+        # Advanced Altair Chart Integration
+        st.subheader("Trailer Production Index: 90-Day Forecast")
+
+        # 1. Prepare the Data
+        combined_index = history_df.index.union(forecast_df.index)
+        chart_df = pd.DataFrame(index=combined_index)
+
+        chart_df['Historical Actuals'] = history_df['historical_volume']
+        chart_df['90-Day AI Forecast'] = forecast_df['forecast_production_volume']
+
+        # Bridge the visual gap
+        last_date = history_df.index[-1]
+        last_volume = history_df['historical_volume'].iloc[-1]
+        chart_df.loc[last_date, '90-Day AI Forecast'] = last_volume
+
+        # 2. "Melt" the Dataframe for Altair
+        # Rename 'date' (or 'index') to a capital 'Date' to fix the KeyError
+        chart_df = chart_df.reset_index().rename(columns={'date': 'Date', 'index': 'Date'})
+        melted_df = chart_df.melt(id_vars=['Date'], var_name='Data Type', value_name='Trailer Production Index')
+
+        # 3. Build the Custom Chart
+        chart = alt.Chart(melted_df).mark_line(strokeWidth=2.5).encode(
+            x=alt.X('Date:T', title=''),
+            # Set the exact Y-Axis floor to 40
+            y=alt.Y('Trailer Production Index:Q', scale=alt.Scale(domainMin=40)),
+            color=alt.Color('Data Type:N', scale=alt.Scale(
+                domain=['Historical Actuals', '90-Day AI Forecast'],
+                range=['#1f77b4', '#ff0000']  # Blue and Red
+            ), legend=alt.Legend(orient='bottom', title=None)),  # <--- MOVED TO BOTTOM
+            # Reintroduce the dashed line for the forecast
+            strokeDash=alt.condition(
+                alt.datum['Data Type'] == '90-Day AI Forecast',
+                alt.value([5, 5]),  # Dashed line
+                alt.value([0])  # Solid line
+            )
+        ).properties(
+            height=450
         )
 
-    with col2:
-        st.metric(label="Forecast Status", value="Stable / Flat")
+        # Render in Streamlit
+        st.altair_chart(chart, use_container_width=True)
 
-    with col3:
-        st.metric(label="Primary Market Driver", value="Cass Freight Shipments")
+        st.caption(
+            "Note: This baseline represents a 90-day outlook of OEM trailer production, driven by underlying freight"
+            "and economic fundamentals.")
 
-    st.divider()
+    # -------------------------------------------------------
+    # TAB 2: FEATURE SELECTION
+    # -------------------------------------------------------
+    with tab2:
+        st.subheader("The Supply Chain Physics: Why These Features?")
+        st.markdown("""
+        Rather than relying on internal sales sentiment, this XGBoost model was trained on dozens of macroeconomic
+        indicators.  Through iterative feature tournaments, the model identified these five indicators as the most
+        mathematically significant drivers of OEM trailer production. 
 
-    # =======================================================
-    # 5. Advanced Altair Chart Integration
-    # =======================================================
-    st.subheader("Trailer Production Index: 90-Day Forecast")
+        Here is the business logic behind the math:
+        """)
 
-    # 1. Prepare the Data
-    combined_index = history_df.index.union(forecast_df.index)
-    chart_df = pd.DataFrame(index=combined_index)
+        st.divider()
 
-    chart_df['Historical Actuals'] = history_df['historical_volume']
-    chart_df['90-Day AI Forecast'] = forecast_df['forecast_production_volume']
+        st.markdown("""
+        **1. Cass Freight Shipments Index** * **The Logic:** Physical freight volume is the ultimate constraint. If
+        freight shipments are dropping, fleets have excess capacity. They will not order new trailers to haul freight
+        that doesn't exist.
 
-    # Bridge the visual gap
-    last_date = history_df.index[-1]
-    last_volume = history_df['historical_volume'].iloc[-1]
-    chart_df.loc[last_date, '90-Day AI Forecast'] = last_volume
+        **2. PPI: Heavy Motor Truck Manufacturing** * **The Logic:** This acts as the capital cost constraint. When the
+        Producer Price Index for truck cabs spikes, fleets allocate their capital budgets to highly expensive power
+        units (tractors), delaying their trailer replacement cycles.
 
-    # 2. "Melt" the Dataframe for Altair
-    # Rename 'date' (or 'index') to a capital 'Date' to fix the KeyError
-    chart_df = chart_df.reset_index().rename(columns={'date': 'Date', 'index': 'Date'})
-    melted_df = chart_df.melt(id_vars=['Date'], var_name='Data Type', value_name='Trailer Production Index')
+        **3. Industrial Production Index** * **The Logic:** A massive percentage of flatbed and dry van freight is
+        tied to heavy manufacturing. This serves as the leading indicator for the industrial sector's demand for
+        physical transportation.
 
-    # 3. Build the Custom Chart
-    chart = alt.Chart(melted_df).mark_line(strokeWidth=2.5).encode(
-        x=alt.X('Date:T', title=''),
-        # Set the exact Y-Axis floor to 40
-        y=alt.Y('Trailer Production Index:Q', scale=alt.Scale(domainMin=40)),
-        color=alt.Color('Data Type:N', scale=alt.Scale(
-            domain=['Historical Actuals', '90-Day AI Forecast'],
-            range=['#1f77b4', '#ff0000']  # Blue and Red
-        ), legend=alt.Legend(orient='bottom', title=None)),  # <--- MOVED TO BOTTOM
-        # Reintroduce the dashed line for the forecast
-        strokeDash=alt.condition(
-            alt.datum['Data Type'] == '90-Day AI Forecast',
-            alt.value([5, 5]),  # Dashed line
-            alt.value([0])  # Solid line
-        )
-    ).properties(
-        height=450
-    )
+        **4. Consumer Sentiment Index (UMCSENT)** * **The Logic:** Consumer sentiment is the earliest upstream
+        indicator of retail freight volume. Drops in consumer confidence reliably precede drops in retail inventory
+        restocking, which eventually hits trailer utilization.
 
-    # Render in Streamlit
-    st.altair_chart(chart, use_container_width=True)
-
-    st.caption(
-        "Note: This baseline represents a 90-day outlook of OEM trailer production, driven by underlying freight and economic fundamentals.")
+        **5. Manufacturing Inventory-to-Sales Ratio** * **The Logic:** This captures the **Bullwhip Effect**. When this
+        ratio spikes, it means factories have overproduced and sales have slowed. They stop shipping goods to
+        warehouses, heavily dampening demand for new commercial fleet equipment.
+        """)
 
 except FileNotFoundError:
     st.error("Data files not found. Please run the `models.py` export pipeline first.")
