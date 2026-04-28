@@ -12,7 +12,12 @@ def load_data():
     history_df = pd.read_csv('historical_actuals.csv', parse_dates=['date'])
     history_df.set_index('date', inplace=True)
 
-    return history_df, forecast_df
+    # Load Features for the 3x2 Grid
+    features_df = pd.read_csv('feature_history.csv', parse_dates=['date'])
+    features_df.set_index('date', inplace=True)
+
+    # Return all three dataframes
+    return history_df, forecast_df, features_df
 
 def forecast_slope_percentage(df: pd.DataFrame) -> float:
     # Create the x-axis

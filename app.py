@@ -27,16 +27,20 @@ st.divider()
 
 # 3. Load Data & Render Layout
 try:
-    history_df, forecast_df = load_data()
+    # UPDATED: Now unpacks three dataframes
+    history_df, forecast_df, features_df = load_data()
 
-    # Layout: Tabs Configuration
     tab1, tab2 = st.tabs(["Executive Dashboard", "Model Explainability (Features)"])
 
     with tab1:
         render_executive_dashboard(history_df, forecast_df)
 
     with tab2:
-        render_feature_explainability()
+        # UPDATED: Pass the features dataframe into the tab
+        render_feature_explainability(features_df)
+
+except FileNotFoundError:
+    st.error("Data files not found. Please run the `models.py` export pipeline first.")
 
 except FileNotFoundError:
     st.error("Data files not found. Please run the `models.py` export pipeline first.")

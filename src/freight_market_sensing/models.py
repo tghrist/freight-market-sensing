@@ -198,6 +198,19 @@ def generate_live_forecast():
     print("Success! Saved 'historical_actuals.csv' for Streamlit consumption.")
 
     # =======================================================
+    # Export Feature History for Streamlit Grid (2024 to Present)
+    # =======================================================
+
+    # Grab the target and the 5 features
+    feature_history_df = df[[base_target] + features].loc['2024-01-01':]
+
+    # Rename the target so Streamlit always knows exactly what it's called
+    feature_history_df.rename(columns={base_target: 'target_index'}, inplace=True)
+
+    feature_history_df.to_csv('../../feature_history.csv')
+    print("Success! Saved 'feature_history.csv' for the UI Grid.")
+
+    # =======================================================
     # VISUALIZATION: Combine Actuals and Forecast
     # =======================================================
     print("\nGenerating Combined Live Forecast Chart...")
@@ -247,5 +260,5 @@ def generate_live_forecast():
 
 if __name__ == "__main__":
     # Comment out the backtest and run the live forecast!
-    run_backtest()
-    # generate_live_forecast()
+    # run_backtest()
+    generate_live_forecast()
