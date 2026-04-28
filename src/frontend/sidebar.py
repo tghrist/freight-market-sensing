@@ -4,10 +4,10 @@ import json
 def render_sidebar():
     st.sidebar.header("Model Architecture")
     st.sidebar.info("""
-    **Engine:** XGBoost Regressor  
-    **Horizon:** 90-Day Forward  
-    **Architecture:** Rate-of-Change (Delta)
-    """)
+        **Engine:** XGBoost Regressor  
+        **Horizon:** 90-Day Forward  
+        **Architecture:** Absolute Level (Tree-Based Thresholds)
+        """)
 
     st.sidebar.divider()
 

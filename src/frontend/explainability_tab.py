@@ -68,10 +68,10 @@ def render_feature_explainability(features_df: pd.DataFrame):
     shipments are dropping, fleets have excess capacity. They will not order new trailers to haul freight that doesn't
     exist.
 
-    **2. PPI: Heavy Motor Truck Manufacturing** * **The Logic:** This acts as the CapEx constraint. Because the model
-    tracks the rate of change, it flags sudden price spikes in truck cabs. When power units suddenly become vastly more
-    expensive, fleets are forced to absorb the sticker shock by delaying their trailer replacement cycles, driving
-    trailer demand down.
+    **2. PPI: Heavy Motor Truck Manufacturing** * **The Logic:** This acts as the ultimate CapEx constraint. As the
+    absolute cost of truck cabs reaches historic highs, fleets exhaust their capital budgets simply maintaining their
+    power units (tractors). This sticker shock forces them to delay their trailer replacement cycles, driving trailer
+    demand down during peak inflationary periods.
 
     **3. Industrial Production Index** * **The Logic:** A massive percentage of flatbed and dry van freight is tied to
     heavy manufacturing. This serves as the leading indicator for the industrial sector's demand for physical
