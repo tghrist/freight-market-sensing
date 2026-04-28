@@ -5,6 +5,7 @@ from sklearn.metrics import mean_absolute_percentage_error
 import json
 from datetime import datetime
 
+from src.config import CHAMPION_FEATURES, ACTIVE_TARGET
 from src.freight_market_sensing.feature_engineering.features import FeatureStore
 
 
@@ -15,14 +16,8 @@ def run_backtest():
     store = FeatureStore()
     df = store.build_master_matrix()
 
-    features = [
-        'ppi_heavy_truck_cab_mfg',
-        'industrial_production',
-        'mfg_inventory_to_sales_ratio',
-        'consumer_sentiment',
-        'cass_shipments'
-    ]
-    base_target = 'trailer_production_volume'
+    features = list(CHAMPION_FEATURES.keys())
+    base_target = ACTIVE_TARGET
 
     # =======================================================
     # THE DELTA FIX: Predict the Rate of Change
@@ -133,14 +128,8 @@ def generate_live_forecast():
     store = FeatureStore()
     df = store.build_master_matrix()
 
-    features = [
-        'ppi_heavy_truck_cab_mfg',
-        'industrial_production',
-        'mfg_inventory_to_sales_ratio',
-        'consumer_sentiment',
-        'cass_shipments'
-    ]
-    base_target = 'trailer_production_volume'
+    features = list(CHAMPION_FEATURES.keys())
+    base_target = ACTIVE_TARGET
 
     forecast_horizon_days = 90
 
