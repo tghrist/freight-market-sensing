@@ -4,6 +4,7 @@ import numpy as np
 
 # Corrected absolute import based on your project structure
 from src.freight_market_sensing.feature_engineering.features import FeatureStore
+from src.config import CHAMPION_FEATURES, ACTIVE_TARGET
 
 
 def analyze_champion_correlation():
@@ -12,15 +13,8 @@ def analyze_champion_correlation():
     store = FeatureStore()
     df = store.build_master_matrix()
 
-    # The Final "Dream Team" Roster + The Target Variable
-    champions = [
-        'ppi_heavy_truck_cab_mfg',  # Equipment Pricing
-        'industrial_production',  # Physical Output
-        'mfg_inventory_to_sales_ratio',  # Supply Chain Bullwhip
-        'consumer_sentiment',  # Macro Sentiment
-        'cass_shipments',  # Carrier Pricing
-        'trailer_production_volume'  # Target (To see predictive power)
-    ]
+    # The Final "Dream Team" Roster + The Target Variable (Dynamically loaded from config)
+    champions = list(CHAMPION_FEATURES.keys()) + [ACTIVE_TARGET]
 
     # Safety Check: Ensure all champions are in the master matrix
     missing_cols = [col for col in champions if col not in df.columns]

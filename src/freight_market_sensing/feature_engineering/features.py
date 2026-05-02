@@ -57,8 +57,8 @@ class FeatureStore:
         return master_df
 
     def engineer_business_logic(self, df) -> pd.DataFrame:
-        """Applies S&OP specific formulas to the raw data."""
-        print("Engineering custom S&OP targets and features...")
+        """Applies S&OP specific formulas and dynamic transformations."""
+        print("Engineering custom S&OP targets and dynamic transformations...")
 
         # 1. The Target: Cass Inferred Rate (Cost per shipment)
         if 'cass_expenditures' in df.columns and 'cass_shipments' in df.columns:
@@ -75,13 +75,34 @@ class FeatureStore:
         # =======================================================
         if 'dow_jones_transportation_avg' in df.columns:
             print("Intercepting DJTA: Downsampling from Daily to Weekly (Friday)...")
-
-            # Create different resampling features
             df['djta_mean'] = df['dow_jones_transportation_avg'].resample('W-FRI').mean()
             df['djta_vol'] = df['dow_jones_transportation_avg'].resample('W-FRI').std()
             df['djta_last'] = df['dow_jones_transportation_avg'].resample('W-FRI').last()
 
-        df.to_clipboard()
+        # =======================================================
+        # DYNAMIC TRANSFORMATION (Absolute vs Velocity)
+        # =======================================================
+        # Build a lookup dictionary from SERIES_MAP mapping names to their rules
+        transform_rules = {
+            meta['name']: meta.get('transformation', 'absolute')
+            for meta in SERIES_MAP.values()
+        }
+
+        # Track which columns get converted to drop the initial NaN row later
+        velocity_cols_converted = []
+
+        for col in df.columns:
+            # Check if this column has a rule defined in the map
+            if col in transform_rules:
+                if transform_rules[col] == 'velocity':
+                    # Overwrite the column in-place to protect downstream functions
+                    df[col] = df[col].pct_change(periods=1)
+                    velocity_cols_converted.append(col)
+
+        # Drop the NaN row created by the pct_change calculation
+        if velocity_cols_converted:
+            df = df.dropna(subset=velocity_cols_converted)
+
         return df
     
     def get_category_matrix(self, master_df: pd.DataFrame, category: str, target_name: str) -> pd.DataFrame:
@@ -131,8 +152,8 @@ class FeatureStore:
     def build_master_matrix(self) -> pd.DataFrame:
         """The main pipeline method that executes all steps."""
         df = self.load_and_merge()
-        df = self.engineer_business_logic(df)
         df = self.align_time_series(df)
+        df = self.engineer_business_logic(df)
 
         print(f"Pipeline Complete! Master Matrix Shape: {df.shape}")
         return df
