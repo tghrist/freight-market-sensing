@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import json
 
 @st.cache_data
 def load_data():
@@ -34,3 +35,11 @@ def forecast_slope_percentage(df: pd.DataFrame) -> float:
     total_pct_change = ((end_value - start_value) / start_value) * 100
 
     return total_pct_change
+
+@st.cache_data
+def load_backtest_metrics():
+    try:
+        with open('backtest_metrics.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None

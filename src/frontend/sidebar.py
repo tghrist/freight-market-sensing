@@ -1,5 +1,5 @@
 import streamlit as st
-import json
+from src.frontend.data_loader import load_backtest_metrics
 
 def render_sidebar():
     st.sidebar.header("Model Architecture")
@@ -14,10 +14,9 @@ def render_sidebar():
     # Backtest Performance Metrics (Dynamic JSON Ingestion)
     st.sidebar.header("Backtest Validation")
 
-    try:
-        with open('backtest_metrics.json', 'r') as f:
-            metrics = json.load(f)
+    metrics = load_backtest_metrics()
 
+    if metrics is not None:
         st.sidebar.metric(label="Mean Absolute Percentage Error", value=metrics["mape"])
 
         st.sidebar.markdown(f"""
@@ -28,7 +27,7 @@ def render_sidebar():
         **Date Last Ran:** `{metrics['last_ran']}`
         """)
 
-    except FileNotFoundError:
+    else:
         st.sidebar.warning(
             "⚠️ Backtest metrics not found. Run the `run_backtest()` function in `models.py` to generate validation data.")
 
