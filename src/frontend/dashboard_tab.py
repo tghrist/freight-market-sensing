@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import math
 from src.frontend.data_loader import forecast_slope_percentage
 
 def render_executive_dashboard(history_df: pd.DataFrame, forecast_df: pd.DataFrame):
@@ -48,10 +49,14 @@ def render_executive_dashboard(history_df: pd.DataFrame, forecast_df: pd.DataFra
     chart_df = chart_df.reset_index().rename(columns={'date': 'Date', 'index': 'Date'})
     melted_df = chart_df.melt(id_vars=['Date'], var_name='Data Type', value_name='Trailer Production Index')
 
+    # Calculate dynamic y-axis minimum (round down to nearest 5)
+    min_val = melted_df['Trailer Production Index'].min()
+    y_min = math.floor(min_val / 5.0) * 5
+
     # 3. Build the Custom Chart
     chart = alt.Chart(melted_df).mark_line(strokeWidth=2.5).encode(
         x=alt.X('Date:T', title=''),
-        y=alt.Y('Trailer Production Index:Q', scale=alt.Scale(domainMin=40)),
+        y=alt.Y('Trailer Production Index:Q', scale=alt.Scale(domainMin=y_min)),
         color=alt.Color('Data Type:N', scale=alt.Scale(
             domain=['Historical Actuals', '90-Day AI Forecast'],
             range=['#1f77b4', '#ff0000']  # Blue and Red
