@@ -249,5 +249,5 @@ def generate_live_forecast():
 
 if __name__ == "__main__":
     # Comment out the backtest and run the live forecast!
-    # run_backtest()
+    run_backtest()
     generate_live_forecast()
