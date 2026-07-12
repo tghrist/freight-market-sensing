@@ -4,9 +4,12 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_percentage_error
 import json
 from datetime import datetime
+from pathlib import Path
 
 from src.config import CHAMPION_FEATURES, ACTIVE_TARGET
 from src.freight_market_sensing.feature_engineering.features import FeatureStore
+
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 def run_backtest():
@@ -86,7 +89,7 @@ def run_backtest():
         "last_ran": datetime.now().strftime("%Y-%m-%d")
     }
 
-    metrics_filename = '../../backtest_metrics.json'
+    metrics_filename = ROOT_DIR / 'backtest_metrics.json'
     with open(metrics_filename, 'w') as f:
         json.dump(metrics_dict, f, indent=4)
 
@@ -113,7 +116,7 @@ def run_backtest():
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
 
-    file_name = '../../backtest_results.png'
+    file_name = ROOT_DIR / 'backtest_results.png'
     plt.savefig(file_name)
     plt.close()
 
@@ -174,7 +177,7 @@ def generate_live_forecast():
     export_df = live_df[['forecast_production_volume']].round(1)  # Round to whole trailers
 
     # Save directly to your root directory for Power BI/Excel consumption
-    export_filename = '../../live_90_day_forecast.csv'
+    export_filename = ROOT_DIR / 'live_90_day_forecast.csv'
     export_df.to_csv(export_filename)
     print(f"Success! Saved '{export_filename}' to your project root.")
 
@@ -183,7 +186,7 @@ def generate_live_forecast():
     # =======================================================
     historical_export = df[[base_target]].dropna().loc['2024-01-01':]
     historical_export.rename(columns={base_target: 'historical_volume'}, inplace=True)
-    historical_export.to_csv('../../historical_actuals.csv')
+    historical_export.to_csv(ROOT_DIR / 'historical_actuals.csv')
     print("Success! Saved 'historical_actuals.csv' for Streamlit consumption.")
 
     # =======================================================
@@ -196,7 +199,7 @@ def generate_live_forecast():
     # Rename the target so Streamlit always knows exactly what it's called
     feature_history_df.rename(columns={base_target: 'target_index'}, inplace=True)
 
-    feature_history_df.to_csv('../../feature_history.csv')
+    feature_history_df.to_csv(ROOT_DIR / 'feature_history.csv')
     print("Success! Saved 'feature_history.csv' for the UI Grid.")
 
     # =======================================================
@@ -239,7 +242,7 @@ def generate_live_forecast():
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
 
-    chart_filename = '../../live_forecast_combined.png'
+    chart_filename = ROOT_DIR / 'live_forecast_combined.png'
     plt.savefig(chart_filename)
     plt.close()
 
