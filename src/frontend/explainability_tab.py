@@ -23,7 +23,8 @@ def render_feature_explainability(features_df: pd.DataFrame):
     # Create the columns (assuming 1 target + up to 5 features = 6 slots)
     row1_col1, row1_col2, row1_col3 = st.columns(3)
     row2_col1, row2_col2, row2_col3 = st.columns(3)
-    grid_slots = [row1_col1, row1_col2, row1_col3, row2_col1, row2_col2, row2_col3]
+    row3_col1, row3_col2, row3_col3 = st.columns(3)
+    grid_slots = [row1_col1, row1_col2, row1_col3, row2_col1, row2_col2, row2_col3, row3_col1, row3_col2, row3_col3]
 
     # 1. Render the Target Chart first (Hardcoded as slot 0 since it's the target)
     with grid_slots[0]:
